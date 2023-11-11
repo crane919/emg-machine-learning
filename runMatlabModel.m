@@ -8,19 +8,45 @@ function predictions = runMatlabModel(data)
     %%%
     addpath('~/emg-machine-learning/dataCollection/')
     disp(data)
-    res = 2;
     % Process data / filter it / convert it into 4x?x1 
-    [dataChTimeTr, labels] = processData(data);
+    dataChTimeTr = live_preprocessData(data);
     
     % extract features
     includedFeatures = {'var','mav','rms','wavelength', 'iemg', 'range'}; 
     Fs = 1000;
-    feature_table = getFeatures(dataChTimeTr(:,:,10),includedFeatures,Fs);
+    feature_table = getFeatures(dataChTimeTr(:,:,1),includedFeatures,Fs);
    
     % run it through the classifier
     load("latestClassifier.mat");
-    selected_features = [9 10 11 12 13 14 15 16];
     X_test = feature_table(:,selected_features);
     predictions = currentClassifier.predict(X_test)
     % print out the gesture
+end
+
+function [epochedData] = live_preprocessData(data)
+%preprocessData Filter and epoch the data
+%   
+
+Fs = 1000;
+numCh = 4;
+epochedData =[];
+    
+
+% filter data (best to filter before chopping up to reduce artifacts)
+% First check to make sure Fs (samping frequency is correct)
+actualFs = 1/mean(diff(data(:,1)));
+if abs(diff(actualFs - Fs )) > 50
+    warning("Actual Fs and Fs are quite different. Please check sampling frequency.")
+end
+
+filtered_lsl_data = [];
+filtered_lsl_data(:,1) = data(:,1);
+for ch = 1:numCh
+    x = highpass(data(:,ch+1),5,Fs);
+    x = bandstop(x,[58 62],Fs);
+    x = bandstop(x,[118 122],Fs);
+    filtered_lsl_data(:,ch) = bandstop(x,[178 182],Fs);
+end
+
+epochedData = filtered_lsl_data';
 end
