@@ -24,14 +24,11 @@ function predictions = runMatlabModel(data)
 end
 
 function [epochedData] = live_preprocessData(data)
-%preprocessData Filter and epoch the data
-%   
-
+%preprocessData Filter and epoch the data   
 Fs = 1000;
 numCh = 4;
 epochedData =[];
-    
-
+  
 % filter data (best to filter before chopping up to reduce artifacts)
 % First check to make sure Fs (samping frequency is correct)
 actualFs = 1/mean(diff(data(:,1)));
